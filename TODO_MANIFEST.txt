@@ -1,0 +1,9 @@
+Beim Erstellen des AndroidManifest berücksichtigen:
+- <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+  Grund: Ab Android 11 sind fremde Pakete unsichtbar. Betroffen: TvInputManagerHelper.isInputPhysicalTuner
+  (getApplicationInfo/checkPermission), TunableTvView (RECEIVE_INPUT_EVENT-Prüfung), Partner
+  (queryBroadcastReceivers), SetupUtils.onInputListUpdated (getPackageInfo).
+  Das Original (targetSdk 29) war davon nicht betroffen.
+- DVR-Wecker: <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/> (bzw. USE_EXACT_ALARM).
+  Ohne Freigabe fällt RecordingScheduler auf einen nicht-exakten Wecker zurück.
+- DvrRecordingService: Vordergrunddienst mit passendem foregroundServiceType (Android 14) + FOREGROUND_SERVICE-Rechte.

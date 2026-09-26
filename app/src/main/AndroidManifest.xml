@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Zusammengeführt aus AndroidManifest_common.xml + AndroidManifest_all_inputs.xml (AOSP).
+  Weggelassen (nicht portiert): CommonPreferenceProvider, NotificationService, EpgFetchService,
+  Rechte für HDMI-CEC, Kindersicherung/Rating-Systeme und USB-Tuner (DVB_DEVICE).
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+        </intent>
+        <intent>
+            <action android:name="android.media.tv.TvInputService" />
+        </intent>
+    </queries>
+
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+    <!-- Neu: DvrRecordingService nutzt ab Android 14 den Typ specialUse. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Ab Android 11 sind fremde Pakete sonst unsichtbar (siehe TvInputManagerHelper, Partner, SetupUtils). -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.READ_TV_LISTINGS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.START_ACTIVITIES_FROM_BACKGROUND"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29"/>
+    <uses-permission android:name="com.android.providers.tv.permission.READ_EPG_DATA"/>
+    <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA"/>
+    <!-- Nur für System-Apps; der Code prüft, ob sie gewährt sind. -->
+    <uses-permission android:name="com.android.providers.tv.permission.ACCESS_ALL_EPG_DATA"/>
+    <uses-permission android:name="com.android.providers.tv.permission.ACCESS_WATCHED_PROGRAMS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Neu: exakte DVR-Wecker (RecordingScheduler fällt sonst auf nicht-exakte zurück). -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+
+    <uses-feature android:name="android.hardware.usb.host" android:required="false"/>
+    <uses-feature android:name="android.software.leanback" android:required="true"/>
+    <uses-feature android:name="android.software.live_tv" android:required="true"/>
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+
+    <permission android:name="com.android.tv.permission.RECEIVE_INPUT_EVENT"
+         android:description="@string/permdesc_receiveInputEvent"
+         android:label="@string/permlab_receiveInputEvent"
+         android:protectionLevel="signature|privileged"/>
+    <permission android:name="com.android.tv.permission.CUSTOMIZE_TV_APP"
+         android:description="@string/permdesc_customizeTvApp"
+         android:label="@string/permlab_customizeTvApp"
+         android:protectionLevel="signature|privileged"/>
+
+    <application android:name="com.android.tv.TvApplication"
+         android:allowBackup="true"
+         android:banner="@drawable/live_tv_banner"
+         android:icon="@drawable/ic_tv_app"
+         android:label="@string/app_name"
+         android:supportsRtl="true"
+         android:theme="@style/Theme.TV">
+
+        <provider android:name="com.android.tv.search.LocalSearchProvider"
+            android:authorities="com.android.tv.search"
+            android:enabled="true"
+            android:exported="true">
+            <meta-data android:name="SupportedSwitchActionType"
+                android:value="CHANNEL|TVINPUT"/>
+        </provider>
+
+        <!-- Rating-System-Filter entfernt (Kindersicherung nicht portiert). -->
+        <receiver android:name="com.android.tv.receiver.GlobalKeyReceiver"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.GLOBAL_BUTTON"/>
+            </intent-filter>
+        </receiver>
+
+        <activity android:name="com.android.tv.TvActivity"
+             android:exported="true"
+             android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="com.android.tv.MainActivity"
+             android:configChanges="keyboard|keyboardHidden|screenSize|smallestScreenSize|screenLayout|orientation"
+             android:launchMode="singleTask"
+             android:resizeableActivity="true"
+             android:screenOrientation="landscape"
+             android:supportsPictureInPicture="true"
+             android:theme="@style/Theme.TV.MainActivity"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="vnd.android.cursor.item/program"/>
+                <data android:mimeType="vnd.android.cursor.dir/program"/>
+                <data android:mimeType="vnd.android.cursor.item/channel"/>
+                <data android:mimeType="vnd.android.cursor.dir/channel"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.media.tv.action.SETUP_INPUTS"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH"/>
+            </intent-filter>
+            <meta-data android:name="supports_leanback" android:value="true"/>
+            <meta-data android:name="android.app.searchable" android:resource="@xml/searchable"/>
+        </activity>
+        <activity android:name="com.android.tv.LauncherActivity"
+             android:exported="false"
+             android:configChanges="keyboard|keyboardHidden"
+             android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
+        <activity android:name="com.android.tv.SetupPassthroughActivity"
+             android:configChanges="keyboard|keyboardHidden"
+             android:exported="true"
+             android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="com.android.tv.action.LAUNCH_INPUT_SETUP"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="com.android.tv.SelectInputActivity"
+             android:exported="true"
+             android:label="@string/select_inputs"
+             android:configChanges="keyboard|keyboardHidden"
+             android:launchMode="singleTask"
+             android:theme="@style/Theme.SelectInputActivity">
+            <intent-filter>
+                <action android:name="com.android.tv.action.VIEW_INPUTS"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="com.android.tv.onboarding.OnboardingActivity"
+             android:exported="false"
+             android:configChanges="keyboard|keyboardHidden"
+             android:launchMode="singleTop"
+             android:theme="@style/Theme.Setup.GuidedStep"/>
+        <activity android:name="com.android.tv.setup.SystemSetupActivity"
+             android:configChanges="keyboard|keyboardHidden"
+             android:exported="true"
+             android:label="@string/app_name"
+             android:launchMode="singleInstance"
+             android:theme="@style/Theme.Setup.GuidedStep">
+            <intent-filter>
+                <action android:name="com.android.tv.action.LAUNCH_SYSTEM_SETUP"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="com.android.tv.ui.DetailsActivity"
+             android:configChanges="keyboard|keyboardHidden"
+             android:exported="true"
+             android:theme="@style/Theme.TV.Dvr.Browse.Details"/>
+
+        <!-- DVR -->
+        <activity android:name="com.android.tv.dvr.ui.browse.DvrBrowseActivity"
+             android:configChanges="keyboard|keyboardHidden"
+             android:launchMode="singleTask"
+             android:theme="@style/Theme.Leanback.Browse"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.media.tv.action.VIEW_RECORDING_SCHEDULES"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="vnd.android.cursor.dir/recorded_program"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="com.android.tv.dvr.ui.playback.DvrPlaybackActivity"
+             android:configChanges="keyboard|keyboardHidden|screenSize|smallestScreenSize|screenLayout|orientation"
+             android:launchMode="singleTask"
+             android:theme="@style/Theme.Leanback"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="vnd.android.cursor.item/recorded_program"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="com.android.tv.dvr.ui.DvrRecordingSettingsActivity"
+             android:configChanges="keyboard|keyboardHidden"
+             android:exported="false"
+             android:theme="@style/Theme.TV.Dvr.Series.Settings.GuidedStep"/>
+        <activity android:name="com.android.tv.dvr.ui.DvrSeriesSettingsActivity"
+             android:configChanges="keyboard|keyboardHidden"
+             android:exported="false"
+             android:theme="@style/Theme.TV.Dvr.Series.Settings.GuidedStep"/>
+        <activity android:name="com.android.tv.dvr.ui.DvrSeriesDeletionActivity"
+             android:configChanges="keyboard|keyboardHidden"
+             android:exported="false"
+             android:theme="@style/Theme.TV.Dvr.Series.Deletion.GuidedStep"/>
+        <activity android:name="com.android.tv.dvr.ui.DvrSeriesScheduledDialogActivity"
+             android:exported="false"
+             android:theme="@style/Theme.TV.dialog.HalfSizedDialog"/>
+        <activity android:name="com.android.tv.dvr.ui.list.DvrSchedulesActivity"
+             android:configChanges="keyboard|keyboardHidden"
+             android:exported="false"
+             android:theme="@style/Theme.Leanback.Details"/>
+        <activity android:name="com.android.tv.dvr.ui.list.DvrHistoryActivity"
+             android:configChanges="keyboard|keyboardHidden"
+             android:exported="false"
+             android:theme="@style/Theme.Leanback.Details"/>
+
+        <service android:name="com.android.tv.dvr.recorder.DvrRecordingService"
+             android:foregroundServiceType="specialUse"
+             android:exported="false"
+             android:label="@string/dvr_service_name">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Aufnahme von TV-Sendungen (DVR)"/>
+        </service>
+        <receiver android:name="com.android.tv.dvr.recorder.DvrStartRecordingReceiver"
+             android:exported="false"/>
+
+        <service android:name="com.android.tv.recommendation.ChannelPreviewUpdater$ChannelPreviewUpdateService"
+             android:exported="false"
+             android:permission="android.permission.BIND_JOB_SERVICE"/>
+
+        <receiver android:name="com.android.tv.receiver.BootCompletedReceiver"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.android.tv.receiver.PackageIntentsReceiver"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED"/>
+                <action android:name="android.intent.action.PACKAGE_CHANGED"/>
+                <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED"/>
+                <action android:name="android.intent.action.PACKAGE_REMOVED"/>
+                <data android:scheme="package"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

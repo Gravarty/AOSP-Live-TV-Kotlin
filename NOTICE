@@ -1,0 +1,3 @@
+AOSP Live TV Kotlin
+Kotlin-Portierung von AOSP Live Channels (LineageOS android_packages_apps_TV, lineage-21.0).
+Original: Copyright (C) The Android Open Source Project, Apache License 2.0.
