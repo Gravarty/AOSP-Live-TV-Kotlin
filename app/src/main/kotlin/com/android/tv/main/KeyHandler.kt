@@ -64,6 +64,12 @@ class KeyHandler(
     /** Aus Activity.dispatchKeyEvent; [superDispatch] = Standardverarbeitung der Activity. */
     fun dispatchKeyEvent(event: KeyEvent, superDispatch: (KeyEvent) -> Boolean): Boolean {
         if (activity.iAppManager?.dispatchKeyEvent(event) == true) return true
+        // Bugfix: Guide-Taste der Fernbedienung öffnet/schließt die Programmübersicht. AOSP bekommt sie nur
+        // als globale Taste (GLOBAL_BUTTON), die Android ausschließlich an die System-TV-App sendet.
+        if (event.keyCode in GUIDE_KEYCODES) {
+            if (event.action == KeyEvent.ACTION_UP && !event.isCanceled) overlayManager.toggleProgramGuide()
+            return true
+        }
         if (event.keyCode == KeyEvent.KEYCODE_BACK) {
             // BACK_UP ohne BACK_DOWN ignorieren (von einer anderen Activity übrig)
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) backKeyPressed = true
@@ -303,6 +309,11 @@ class KeyHandler(
         else CHANNEL_CHANGE_DELAY_MS_IN_NORMAL_SPEED
 
     companion object {
+        /**
+         * Bugfix: Tastencodes der Guide-Taste. Neben dem Standard auch Herstellerbelegungen
+         * (JVC/Vestel: KEYCODE_11). Weitere Geräte hier ergänzen.
+         */
+        private val GUIDE_KEYCODES = setOf(KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_11)
         private const val TAG = "KeyHandler"
         private const val PERMISSION_MODIFY_PARENTAL_CONTROLS = "android.permission.MODIFY_PARENTAL_CONTROLS"
         private const val CHANNEL_CHANGE_NORMAL_SPEED_DURATION_MS = 3000L
